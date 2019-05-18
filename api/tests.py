@@ -24,10 +24,9 @@ class UserTests(TestCase):
             "last_name": "Mc Toaster"
         }
 
-    # CREATE TWO USERS, AUTHENTICATE ONE
-    def create_users_and_authenticate(self):
         user1dict = self.validUserDict.copy()
         user2dict = self.validUserDict.copy()
+        user1dict.update({'email': 'test1@yopmail.com', 'username': 'test1'})
         user2dict.update({'email': 'test2@yopmail.com', 'username': 'test2'})
 
         # CREATE TWO USERS
@@ -35,8 +34,8 @@ class UserTests(TestCase):
         self.client.post(reverse('api:user'), data=user2dict, format='json')
 
         credentials = {
-            'email': self.validUserDict['email'],
-            'password': self.validUserDict['password'],
+            'email': user1dict['email'],
+            'password': user1dict['password'],
         }
         token = self.client.post(reverse('token_obtain_pair'), data=credentials)
         self.client.credentials(HTTP_AUTHORIZATION='{} {}'.format('Bearer', token.data.get('access')))
@@ -54,6 +53,8 @@ class UserTests(TestCase):
         result = json.loads(response.content.decode('utf-8'))
         user_id = result.get('id')
 
+        # Reinstance client
+        self.client = APIClient()
         response = self.client.get('/api/users/' + str(user_id))
         self.assertEqual(response.status_code, 401)
 
@@ -73,21 +74,15 @@ class UserTests(TestCase):
         self.assertEqual(result.get('wallet').get('balance'), 10)
 
     def test_forbidden_get_details(self):
-        self.create_users_and_authenticate()
-
         # GET DETAILS FROM USER 2
         response = self.client.get('/api/users/2')
         self.assertEqual(response.status_code, 403)
 
     def test_get_details(self):
-        self.create_users_and_authenticate()
-
         response = self.client.get('/api/users/1')
         self.assertEqual(response.status_code, 200)
 
     def test_forbidden_transfer(self):
-        self.create_users_and_authenticate()
-
         # TRANSFER FROM USER 2 WALLET
         response = self.client.post('/api/users/2/transfer', data={'to_user': 1, 'amount': 10})
         self.assertEqual(response.status_code, 403)
@@ -97,8 +92,6 @@ class UserTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_transfer(self):
-        self.create_users_and_authenticate()
-
         # TRANSFER FROM USER 1 WALLET
         response = self.client.post('/api/users/1/transfer', data={'to_user': 2, 'amount': 10})
         self.assertEqual(response.status_code, 200)
