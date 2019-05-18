@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/aitorbouzas/transfers.svg?branch=master)](https://travis-ci.com/aitorbouzas/transfers)
-
 # Transfers RESTful API
 
 This repository contains a Django RESTful API for a simple wallet transfer app
